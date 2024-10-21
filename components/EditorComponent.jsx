@@ -16,8 +16,8 @@ import { Button } from '@headlessui/react';
 import { Play, Loader, TriangleAlert } from 'lucide-react';
 import { compileCode } from '@/services/CompileCode';
 import { initialCodeSnippets, supportedLanguages } from '@/constants/languages';
-const socket = io('http://localhost:3001')
-// const socket = io('https://zenith-ide-backend.onrender.com');
+
+const socket = io('https://zenith-ide-backend.onrender.com');
 
 export default function EditorComponent() {
     const { theme } = useTheme();
