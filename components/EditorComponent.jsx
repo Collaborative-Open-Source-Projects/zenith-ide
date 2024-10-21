@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { ModeToggle } from './theme-toggle';
 import SelectLanguage from './SelectLanguage';
+import { useParams } from 'next/navigation';
 import Editor from '@monaco-editor/react';
+import JoinRoombtn from './JoinRoombtn';
 import io from 'socket.io-client';
 import {
     ResizableHandle,
@@ -19,25 +21,33 @@ const socket = io('https://zenith-ide-backend.onrender.com');
 
 export default function EditorComponent() {
     const { theme } = useTheme();
+    const { id: roomId } = useParams();
     const [sourceCode, setSourceCode] = useState(initialCodeSnippets['javascript']);
     const [languageOption, setLanguageOption] = useState(supportedLanguages[0]);
     const [loading, setLoading] = useState(false);
     const [output, setOutput] = useState([]);
     const [err, setErr] = useState(false);
+    
 
     useEffect(() => {
-        socket.on('message2', (newCode) => {
-            setSourceCode(newCode);
-        });
+        if (roomId) {
+            socket.emit('joinRoom', roomId); 
+            console.log(`Joined room: ${roomId}`);
 
-        return () => {
-            socket.off('message2');
-        };
-    }, []);
+            socket.on('message2', (newCode) => {
+                setSourceCode(newCode);
+            });
+
+            return () => {
+                socket.off('message2');
+                socket.emit('leaveRoom', roomId); 
+            };
+        }
+    }, [roomId]);
 
     function handleOnchange(newValue) {
         setSourceCode(newValue);
-        socket.emit('message1', newValue);
+        socket.emit('message1', { roomId, code: newValue }); 
     }
 
     function onSelect(value) {
@@ -110,6 +120,7 @@ export default function EditorComponent() {
             <div className="flex items-center justify-between pb-3">
                 <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0">Zenith IDE</h2>
                 <div className="flex items-center space-x-2">
+                    <JoinRoombtn />
                     <ModeToggle />
                     <div className="w-[230px]">
                         <SelectLanguage onSelect={onSelect} selectedLanguageOption={languageOption} />
